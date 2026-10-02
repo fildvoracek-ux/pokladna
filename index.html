@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<title>Testovací pokladna</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--ink:#14171c;--mute:#667085;--line:#e2e5ea;--accent:#1f6feb;--ok:#14854f;--warn:#b86e00;--bad:#c93232}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:calc(92px + env(safe-area-inset-bottom));touch-action:manipulation;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;cursor:pointer}
+input{font:inherit;user-select:text;-webkit-user-select:text}
+h1{font-size:18px;margin:0}
+h2{font-size:15px;margin:0;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--card);border-bottom:1px solid var(--line)}
+.right{display:flex;align-items:center;gap:8px}
+.pill{font-size:13px;font-weight:600;padding:4px 10px;border-radius:99px;background:#e6f4ec;color:var(--ok);white-space:nowrap}
+.pill.off{background:#fff1dc;color:var(--warn)}
+.icon{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:20px;line-height:1}
+#banner{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:#fff1dc;color:#6b4300;font-size:14px}
+#banner.bad{background:#fde4e4;color:#7a1c1c}
+
+main{padding:12px 14px}
+.today{display:flex;justify-content:space-between;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:12px}
+.today b{font-size:20px}
+.today small{color:var(--mute)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{position:relative;min-height:100px;border:0;border-radius:18px;padding:12px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(0,0,0,.12);transition:transform .08s}
+.tile:active{transform:scale(.97)}
+.tile .n{font-weight:700;font-size:18px;line-height:1.2;overflow-wrap:anywhere}
+.tile .p{font-size:16px;opacity:.92}
+.tile .badge{position:absolute;top:8px;right:8px;min-width:28px;height:28px;padding:0 8px;border-radius:99px;background:#fff;color:#111;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+
+.cart{margin-top:18px}
+.cart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.link{border:0;background:none;color:var(--bad);font-weight:600;padding:6px 0}
+.link[disabled]{opacity:.35}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--mute)}
+.line{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 14px;margin-bottom:8px}
+.line .nm{font-weight:600;overflow-wrap:anywhere}
+.line .sub{color:var(--mute);font-size:14px}
+.step{display:flex;align-items:center;gap:2px}
+.step button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:22px;font-weight:600;line-height:1}
+.step span{min-width:30px;text-align:center;font-weight:700;font-size:18px}
+.rm{width:40px;height:42px;border:0;background:none;color:var(--mute);font-size:20px}
+
+.last{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.last .t{font-size:14px;color:var(--mute)}
+.last b{display:block;font-size:17px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;font-weight:600}
+.btn.danger{color:var(--bad);border-color:#efc3c3}
+.primary{background:var(--accent);color:#fff;border:0;border-radius:14px;font-weight:700;padding:0 22px;height:56px;font-size:18px}
+.primary[disabled]{opacity:.4}
+
+#bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.06)}
+#bar .lbl{font-size:13px;color:var(--mute)}
+#bar b{font-size:26px;display:block;line-height:1.1}
+
+dialog{border:0;border-radius:20px;padding:18px;width:min(92vw,400px);color:var(--ink);background:var(--card)}
+dialog::backdrop{background:rgba(10,12,16,.5)}
+dialog h2{margin-bottom:10px}
+.big{font-size:34px;font-weight:800;margin:2px 0 14px}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.field{width:100%;height:50px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:20px;background:#fff;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chips button{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:8px 14px;font-weight:600}
+.change{min-height:56px;border-radius:14px;padding:10px 14px;background:var(--bg);color:var(--mute);font-size:15px;display:flex;align-items:center}
+.change.ok{background:#e6f4ec;color:var(--ok);font-size:22px;font-weight:800}
+.change.bad{background:#fde4e4;color:var(--bad);font-weight:700}
+.btns{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-top:16px}
+.btns .btn{height:56px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:6px}
+
+.acard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.arow{display:grid;grid-template-columns:1fr 100px;gap:8px}
+.arow .field{height:46px;font-size:17px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+.sw.on{border-color:#fff;box-shadow:0 0 0 3px var(--ink)}
+.atools{display:flex;gap:6px;justify-content:flex-end}
+.atools button{width:42px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:17px}
+.atools button[disabled]{opacity:.3}
+.abar{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:14px}
+.abar .btn{height:52px}
+
+#toast{position:fixed;left:14px;right:14px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:20;background:#14171c;color:#fff;border-radius:14px;padding:14px 16px;font-weight:600;text-align:center;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}
+#toast.show{opacity:1;transform:none}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="title">Testovací pokladna</h1>
+  <div class="right">
+    <span id="status" class="pill">Online</span>
+    <button id="adminBtn" class="icon" aria-label="Správa produktů">⚙️</button>
+  </div>
+</header>
+<div id="banner" hidden></div>
+
+<main id="viewSale">
+  <div class="today"><div><small>Dnes celkem</small><br><b id="todayTotal">0 Kč</b></div><small id="todayCount"></small></div>
+  <section id="tiles" class="tiles" aria-label="Produkty"></section>
+
+  <section class="cart">
+    <div class="cart-head"><h2>Košík</h2><button id="clearBtn" class="link">Vyprázdnit</button></div>
+    <div id="cartList"></div>
+  </section>
+
+  <section id="lastSale" class="last" hidden>
+    <div><span class="t">Poslední prodej</span><b id="lastInfo"></b></div>
+    <button id="undoBtn" class="btn danger">Vrátit zpět</button>
+  </section>
+</main>
+
+<main id="viewAdmin" hidden>
+  <h2 style="margin-bottom:10px">Správa produktů</h2>
+  <div id="adminList"></div>
+  <button id="addProd" class="btn" style="width:100%;height:50px">+ Přidat produkt</button>
+  <div class="abar"><button id="adminCancel" class="btn">Zrušit</button><button id="adminSave" class="primary">Uložit</button></div>
+  <div id="adminErr" class="err"></div>
+</main>
+
+<footer id="bar">
+  <div><span class="lbl" id="barLbl">Celkem</span><b id="cartTotal">0 Kč</b></div>
+  <button id="payBtn" class="primary" disabled>Zaúčtovat</button>
+</footer>
+
+<dialog id="payDlg">
+  <h2>Zaúčtování</h2>
+  <div class="big" id="payTotal"></div>
+  <label for="cashInput">Přijatá hotovost (nepovinné)</label>
+  <input id="cashInput" class="field" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Kč" autocomplete="off">
+  <div class="chips" id="chips"></div>
+  <div class="change" id="changeBox"></div>
+  <div class="btns"><button id="payCancel" class="btn">Zpět</button><button id="payOk" class="primary">Zaúčtovat</button></div>
+</dialog>
+
+<dialog id="pinDlg">
+  <h2>Admin</h2>
+  <label for="pinInput">PIN admina</label>
+  <input id="pinInput" class="field" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+  <div class="err" id="pinErr"></div>
+  <div class="btns"><button id="pinCancel" class="btn">Zrušit</button><button id="pinOk" class="primary">Přihlásit</button></div>
+</dialog>
+
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+
+// ====== NASTAVENÍ ======
+const CONFIG = {
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyuG3t4C0xwPkDXjIUYo-ILjDpZJsowd7R0lpyMiWXzl_t6KwZHIIecWzoblum3h6ysmw/exec',  // sem vložte URL webové aplikace z Apps Scriptu (končí na /exec)
+  TITLE: 'Testovací pokladna',
+  MAX_PRODUCTS: 10,
+};
+// =======================
+
+const PALETTE = ['#2E86AB','#7768AE','#F6AE2D','#3BB273','#E4572E','#E15A97','#14B8A6','#4B5563'];
+const DEFAULT_PRODUCTS = [
+  {id:'p1',name:'tričko',price:400,color:'#2E86AB'},
+  {id:'p2',name:'mikina',price:700,color:'#7768AE'},
+  {id:'p3',name:'sluneční brýle',price:200,color:'#F6AE2D'},
+  {id:'p4',name:'plátěnka',price:150,color:'#3BB273'},
+  {id:'p5',name:'oplatky',price:90,color:'#E4572E'},
+  {id:'p6',name:'samolepky',price:20,color:'#E15A97'},
+];
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('pokl.'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('pokl.'+k, JSON.stringify(v)); }catch(e){} },
+};
+const money = n => (Math.round(n*100)/100).toLocaleString('cs-CZ') + ' Kč';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const localDate = ts => new Date(ts || Date.now()).toLocaleDateString('sv-SE');
+const clock = ts => new Date(ts).toLocaleTimeString('cs-CZ', {hour:'2-digit', minute:'2-digit'});
+const inkOn = hex => {
+  const n = parseInt(hex.slice(1), 16), r = n>>16, g = (n>>8)&255, b = n&255;
+  return (0.299*r + 0.587*g + 0.114*b) > 165 ? '#14171c' : '#fff';
+};
+const configured = () => /^https:\/\//.test(CONFIG.SCRIPT_URL);
+
+// ---------- stav ----------
+let products = store.get('products', DEFAULT_PRODUCTS);
+let cart     = store.get('cart', {});          // {id: {name, price, qty}}
+let queue    = store.get('queue', []);         // čekající odeslání do tabulky
+let last     = store.get('last', null);        // poslední prodej z tohoto telefonu
+let today    = store.get('today', {date:'', total:0, count:0});
+let online = navigator.onLine, flushing = false, inflightId = null, lastError = '';
+let adminPin = null, draft = null;
+
+const saveCart = () => store.set('cart', cart);
+const saveQueue = () => store.set('queue', queue);
+
+// ---------- komunikace se skriptem ----------
+async function api(body){
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 20000);
+  let res;
+  try{
+    res = body
+      ? await fetch(CONFIG.SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body), signal:ctl.signal})
+      : await fetch(CONFIG.SCRIPT_URL + '?_=' + Date.now(), {signal:ctl.signal});
+  }catch(e){
+    online = false; throw {net:true};
+  }finally{ clearTimeout(timer); }
+  online = true;
+  try{ return await res.json(); }catch(e){ throw {bad:true}; }
+}
+
+async function flush(){
+  if (flushing || !configured()) return;
+  flushing = true; renderStatus();
+  try{
+    while (queue.length){
+      const it = queue[0];
+      inflightId = it.id;
+      let res;
+      try{ res = await api(it); }
+      catch(e){ lastError = e.bad ? 'Skript vrátil neplatnou odpověď – zkontrolujte jeho nasazení.' : ''; break; }
+      if (res && res.ok){ queue.shift(); saveQueue(); lastError = ''; renderToday(); }
+      else { lastError = 'Zápis do tabulky selhal: ' + ((res && res.error) || 'neznámá chyba'); break; }
+    }
+  } finally { inflightId = null; flushing = false; }
+  if (!queue.length) await refreshState();
+  renderStatus(); renderToday();
+}
+
+async function refreshState(){
+  if (!configured() || flushing) return;
+  try{
+    const res = await api();
+    if (res && res.ok){
+      lastError = '';
+      if (Array.isArray(res.products) && res.products.length && !draft){
+        products = res.products; store.set('products', products); renderTiles();
+      }
+      today = {date: localDate(), total: res.today.total, count: res.today.count};
+      store.set('today', today);
+    }else lastError = 'Skript hlásí chybu: ' + ((res && res.error) || '');
+  }catch(e){ if (e.bad) lastError = 'Skript vrátil neplatnou odpověď – zkontrolujte jeho nasazení.'; }
+  renderStatus(); renderToday();
+}
+
+// ---------- vykreslení ----------
+function renderTiles(){
+  $('tiles').innerHTML = products.map(p => {
+    const q = cart[p.id] ? cart[p.id].qty : 0;
+    return `<button class="tile" data-id="${esc(p.id)}" style="background:${esc(p.color)};color:${inkOn(p.color)}">
+      ${q ? `<span class="badge">${q}</span>` : ''}
+      <span class="n">${esc(p.name)}</span><span class="p">${money(p.price)}</span></button>`;
+  }).join('');
+}
+
+const cartLines = () => Object.entries(cart).map(([id, c]) => ({id, ...c}));
+const cartTotal = () => cartLines().reduce((s, l) => s + l.price*l.qty, 0);
+
+function renderCart(){
+  const lines = cartLines();
+  $('cartList').innerHTML = lines.length ? lines.map(l => `
+    <div class="line">
+      <div><div class="nm">${esc(l.name)}</div><div class="sub">${money(l.price)} × ${l.qty} = <b>${money(l.price*l.qty)}</b></div></div>
+      <div class="step"><button data-act="dec" data-id="${esc(l.id)}" aria-label="Ubrat">−</button><span>${l.qty}</span><button data-act="inc" data-id="${esc(l.id)}" aria-label="Přidat">+</button></div>
+      <button class="rm" data-act="rm" data-id="${esc(l.id)}" aria-label="Odebrat položku">✕</button>
+    </div>`).join('') : '<div class="empty">Klepněte na produkt a přidáte ho do košíku.</div>';
+  const t = cartTotal();
+  $('cartTotal').textContent = money(t);
+  $('payBtn').disabled = !lines.length;
+  $('clearBtn').disabled = !lines.length;
+  renderTiles();
+}
+
+function pending(){
+  const d = localDate(); let total = 0, count = 0;
+  for (const q of queue){
+    if (localDate(q.ts) !== d) continue;
+    const s = q.type === 'sale' ? 1 : -1;
+    total += s*q.total; count += s;
+  }
+  return {total, count};
+}
+function renderToday(){
+  const base = today.date === localDate() ? today : {total:0, count:0};
+  const p = pending();
+  $('todayTotal').textContent = money(base.total + p.total);
+  const c = base.count + p.count;
+  $('todayCount').textContent = c ? `${c} ${c===1?'prodej':c>=2&&c<=4?'prodeje':'prodejů'}` : '';
+}
+
+function renderStatus(){
+  const el = $('status');
+  const n = queue.length;
+  if (!configured()){ el.textContent = 'Bez tabulky'; el.className = 'pill off'; }
+  else if (flushing){ el.textContent = 'Odesílám…'; el.className = 'pill off'; }
+  else if (!online){ el.textContent = n ? `Offline · čeká ${n}` : 'Offline'; el.className = 'pill off'; }
+  else if (n){ el.textContent = `Čeká ${n}`; el.className = 'pill off'; }
+  else { el.textContent = 'Online'; el.className = 'pill'; }
+
+  const b = $('banner');
+  let msg = '', bad = false;
+  if (!configured()) msg = 'Pokladna zatím není propojená s tabulkou (chybí SCRIPT_URL). Prodeje se ukládají jen v tomto telefonu.';
+  else if (lastError){ msg = lastError; bad = true; }
+  else if (!online && n) msg = `Bez připojení. ${n} ${n===1?'prodej':n<5?'prodeje':'prodejů'} se odešle automaticky po obnovení signálu.`;
+  b.hidden = !msg; b.textContent = msg; b.className = bad ? 'bad' : '';
+}
+
+function renderLast(){
+  const el = $('lastSale');
+  el.hidden = !last;
+  if (last) $('lastInfo').textContent = `${clock(last.ts)} · ${money(last.total)}`;
+}
+
+function renderAll(){ renderCart(); renderToday(); renderStatus(); renderLast(); }
+
+// ---------- košík ----------
+function addToCart(id){
+  const p = products.find(x => x.id === id); if (!p) return;
+  if (cart[id]) cart[id].qty++; else cart[id] = {name:p.name, price:p.price, qty:1};
+  if (navigator.vibrate) navigator.vibrate(8);
+  saveCart(); renderCart();
+}
+$('tiles').addEventListener('click', e => { const t = e.target.closest('.tile'); if (t) addToCart(t.dataset.id); });
+$('cartList').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const id = b.dataset.id; if (!cart[id]) return;
+  if (b.dataset.act === 'inc') cart[id].qty++;
+  else if (b.dataset.act === 'dec'){ if (--cart[id].qty <= 0) delete cart[id]; }
+  else if (b.dataset.act === 'rm') delete cart[id];
+  saveCart(); renderCart();
+});
+$('clearBtn').onclick = () => { if (cartLines().length && confirm('Vyprázdnit celý košík?')){ cart = {}; saveCart(); renderCart(); } };
+
+// ---------- zaúčtování ----------
+const CHIPS = [100, 200, 500, 1000, 2000];
+const cashVal = () => { const v = $('cashInput').value.replace(/\D/g,''); return v ? parseInt(v, 10) : null; };
+
+function updateChange(){
+  const t = cartTotal(), c = cashVal(), box = $('changeBox');
+  if (c === null){ box.className = 'change'; box.textContent = 'Vratka se spočítá po zadání hotovosti.'; $('payOk').disabled = false; }
+  else if (c < t){ box.className = 'change bad'; box.textContent = `Chybí ${money(t - c)}`; $('payOk').disabled = true; }
+  else { box.className = 'change ok'; box.textContent = `Vratka ${money(c - t)}`; $('payOk').disabled = false; }
+}
+$('payBtn').onclick = () => {
+  const t = cartTotal(); if (!t && !cartLines().length) return;
+  $('payTotal').textContent = money(t);
+  $('cashInput').value = '';
+  $('chips').innerHTML = `<button data-v="${t}">Přesně</button>` + CHIPS.map(v => `<button data-v="${v}">${v}</button>`).join('');
+  updateChange();
+  $('payDlg').showModal();
+};
+$('chips').onclick = e => { const b = e.target.closest('button'); if (b){ $('cashInput').value = b.dataset.v; updateChange(); } };
+$('cashInput').oninput = updateChange;
+$('payCancel').onclick = () => $('payDlg').close();
+
+function newId(){
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-` + Math.random().toString(36).slice(2,5).toUpperCase();
+}
+$('payOk').onclick = () => {
+  const items = cartLines().map(l => ({name:l.name, price:l.price, qty:l.qty}));
+  if (!items.length) return;
+  const total = cartTotal(), cash = cashVal();
+  const sale = {type:'sale', id:newId(), ts:Date.now(), items, total};
+  queue.push(sale); saveQueue();
+  last = {id:sale.id, ts:sale.ts, items, total}; store.set('last', last);
+  cart = {}; saveCart();
+  $('payDlg').close();
+  renderAll();
+  toast(cash !== null && cash > total ? `✓ Zaúčtováno ${money(total)} · vratka ${money(cash-total)}` : `✓ Zaúčtováno ${money(total)}`, cash !== null && cash > total ? 6000 : 3000);
+  flush();
+};
+
+// ---------- vrácení posledního prodeje ----------
+$('undoBtn').onclick = () => {
+  if (!last || !confirm(`Vrátit zpět prodej z ${clock(last.ts)} za ${money(last.total)}?`)) return;
+  const idx = queue.findIndex(q => q.type === 'sale' && q.id === last.id);
+  if (idx > -1 && inflightId !== last.id) queue.splice(idx, 1);       // ještě neodešlo → prostě zahodit
+  else queue.push({type:'storno', id:'STORNO-'+last.id, ts:Date.now(), items:last.items, total:last.total});
+  saveQueue();
+  last = null; store.set('last', null);
+  renderAll(); toast('Prodej vrácen zpět'); flush();
+};
+
+// ---------- admin ----------
+$('adminBtn').onclick = () => {
+  if (draft) return;
+  if (adminPin){ openAdmin(); return; }
+  $('pinInput').value = ''; $('pinErr').textContent = ''; $('pinDlg').showModal(); $('pinInput').focus();
+};
+$('pinCancel').onclick = () => $('pinDlg').close();
+$('pinInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('pinOk').click(); });
+$('pinOk').onclick = async () => {
+  const pin = $('pinInput').value.trim(); if (!pin) return;
+  if (!configured()){ $('pinErr').textContent = 'Pokladna není propojená s tabulkou.'; return; }
+  $('pinOk').disabled = true; $('pinErr').textContent = '';
+  try{
+    const r = await api({action:'verify', pin});
+    if (r.ok){ adminPin = pin; $('pinDlg').close(); openAdmin(); }
+    else $('pinErr').textContent = r.error || 'Špatný PIN';
+  }catch(e){ $('pinErr').textContent = e.bad ? 'Skript vrátil neplatnou odpověď.' : 'Bez internetu se do správy nelze přihlásit.'; }
+  $('pinOk').disabled = false;
+};
+
+function openAdmin(){
+  draft = products.map(p => ({...p}));
+  $('viewSale').hidden = true; $('viewAdmin').hidden = false; $('bar').hidden = true;
+  $('adminErr').textContent = ''; renderAdmin(); window.scrollTo(0, 0);
+}
+function closeAdmin(){
+  draft = null; adminPin = null;
+  $('viewAdmin').hidden = true; $('viewSale').hidden = false; $('bar').hidden = false;
+  renderAll(); refreshState();
+}
+function renderAdmin(){
+  $('adminList').innerHTML = draft.map((p, i) => `
+    <div class="acard" data-i="${i}">
+      <div class="arow">
+        <input class="field" data-f="name" value="${esc(p.name)}" placeholder="Název" maxlength="40" aria-label="Název">
+        <input class="field" data-f="price" value="${esc(p.price)}" placeholder="Cena" inputmode="numeric" aria-label="Cena v Kč">
+      </div>
+      <div class="swatches">${PALETTE.map(c => `<button class="sw${c.toLowerCase()===p.color.toLowerCase()?' on':''}" data-c="${c}" style="background:${c}" aria-label="Barva ${c}"></button>`).join('')}</div>
+      <div class="atools">
+        <button data-a="up" ${i===0?'disabled':''} aria-label="Nahoru">↑</button>
+        <button data-a="down" ${i===draft.length-1?'disabled':''} aria-label="Dolů">↓</button>
+        <button data-a="del" aria-label="Smazat produkt">🗑</button>
+      </div>
+    </div>`).join('');
+  $('addProd').disabled = draft.length >= CONFIG.MAX_PRODUCTS;
+}
+$('adminList').addEventListener('input', e => {
+  const card = e.target.closest('.acard'); if (!card || !e.target.dataset.f) return;
+  draft[+card.dataset.i][e.target.dataset.f] = e.target.value;
+});
+$('adminList').addEventListener('click', e => {
+  const card = e.target.closest('.acard'), b = e.target.closest('button'); if (!card || !b) return;
+  const i = +card.dataset.i;
+  if (b.dataset.c) draft[i].color = b.dataset.c;
+  else if (b.dataset.a === 'up' && i > 0) [draft[i-1], draft[i]] = [draft[i], draft[i-1]];
+  else if (b.dataset.a === 'down' && i < draft.length-1) [draft[i+1], draft[i]] = [draft[i], draft[i+1]];
+  else if (b.dataset.a === 'del'){ if (!confirm(`Smazat produkt „${draft[i].name || 'bez názvu'}“?`)) return; draft.splice(i, 1); }
+  else return;
+  renderAdmin();
+});
+$('addProd').onclick = () => {
+  if (draft.length >= CONFIG.MAX_PRODUCTS) return;
+  draft.push({id:'p'+Date.now().toString(36), name:'', price:'', color:PALETTE[draft.length % PALETTE.length]});
+  renderAdmin();
+  const names = $('adminList').querySelectorAll('[data-f=name]'); names[names.length-1].focus();
+};
+$('adminCancel').onclick = closeAdmin;
+$('adminSave').onclick = async () => {
+  const list = [];
+  for (const [i, p] of draft.entries()){
+    const name = String(p.name).trim(), price = Number(String(p.price).replace(',', '.').replace(/\s/g, ''));
+    if (!name || String(p.price).trim() === '' || !isFinite(price) || price < 0){
+      $('adminErr').textContent = `Produkt č. ${i+1}: vyplňte název a cenu (číslo).`; return;
+    }
+    list.push({id:p.id, name, price, color:p.color});
+  }
+  $('adminSave').disabled = true; $('adminErr').textContent = '';
+  try{
+    const r = await api({action:'saveProducts', pin:adminPin, products:list});
+    if (r.ok){ products = r.products; store.set('products', products); draft = null; closeAdmin(); toast('Produkty uloženy'); }
+    else $('adminErr').textContent = r.error || 'Uložení se nepovedlo.';
+  }catch(e){ $('adminErr').textContent = e.bad ? 'Skript vrátil neplatnou odpověď.' : 'Bez internetu nelze produkty uložit.'; }
+  $('adminSave').disabled = false;
+};
+
+// ---------- toast ----------
+let toastTimer;
+function toast(msg, ms = 3000){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// ---------- start ----------
+document.title = CONFIG.TITLE; $('title').textContent = CONFIG.TITLE;
+addEventListener('online', () => { online = true; renderStatus(); flush(); });
+addEventListener('offline', () => { online = false; renderStatus(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) queue.length ? flush() : refreshState(); });
+setInterval(() => { if (!document.hidden && !draft) queue.length ? flush() : refreshState(); }, 20000);
+renderAll();
+queue.length ? flush() : refreshState();
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
